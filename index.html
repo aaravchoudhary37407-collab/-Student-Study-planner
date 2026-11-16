@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Study Planner | Daily Timetable & Task Manager</title>
+  
+  <!-- External CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Google Fonts: Inter and Poppins for clean modern UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- 1. NAVIGATION BAR -->
+  <!-- ============================================================== -->
+  <header class="navbar">
+    <div class="nav-container">
+      
+      <!-- Brand Logo -->
+      <div class="logo" onclick="switchView('dashboard-view')" style="cursor: pointer;">
+        <span class="logo-icon">🎓</span>
+        <div class="logo-text">
+          <h1>Student Study Planner</h1>
+          <span class="logo-sub">College Academic Hub</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-menu" id="nav-menu">
+        <button class="nav-link active" data-view="dashboard-view">📊 Dashboard</button>
+        <button class="nav-link" data-view="tasks-view">✅ Tasks</button>
+        <button class="nav-link" data-view="schedule-view">🗓️ Timetable</button>
+        <button class="nav-link" data-view="subjects-view">📖 Subjects</button>
+        <button class="nav-link" data-view="timer-view">⏱️ Focus Timer</button>
+        <button class="nav-link" data-view="notes-view">📝 Quick Notes</button>
+      </nav>
+
+      <!-- Right Action Items (Quick Add + Student Profile) -->
+      <div class="nav-actions">
+        <button class="btn btn-sm btn-primary" onclick="openModal('task-modal')">
+          <span>➕</span> <span class="hide-mobile">New Task</span>
+        </button>
+        
+        <!-- Student Profile Badge (Clickable to edit student name) -->
+        <div class="student-profile" id="student-profile-badge" title="Click to edit your name">
+          <div class="avatar" id="student-avatar">A</div>
+          <span class="student-name" id="student-name-display">Alex Morgan</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- MAIN APPLICATION CONTAINER -->
+  <!-- ============================================================== -->
+  <main class="app-main">
+    
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="toast">Action completed successfully!</div>
+
+    <!-- ============================================================ -->
+    <!-- 2. WELCOME HERO & MOTIVATIONAL BANNER -->
+    <!-- ============================================================ -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-greeting">
+          <h2 id="greeting-text">Welcome back, Student! 👋</h2>
+          <p class="hero-subtitle">Organize your subjects, schedule daily study slots, and conquer your college goals.</p>
+        </div>
+        <div class="hero-quote-card">
+          <span class="quote-icon">💡</span>
+          <div class="quote-body">
+            <p id="quote-text">"Success is the sum of small efforts, repeated day in and day out."</p>
+            <span id="quote-author">&mdash; Robert Collier</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-meta">
+        <div class="time-chip">
+          <span class="meta-label">Current Time</span>
+          <span class="meta-value" id="live-clock">12:00:00 PM</span>
+        </div>
+        <div class="date-chip">
+          <span class="meta-label">Today</span>
+          <span class="meta-value" id="current-date">Monday, Nov 16</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 3. PROGRESS TRACKING & METRIC CARDS -->
+    <!-- ============================================================ -->
+    <section class="stats-container">
+      <div class="stats-grid">
+        <!-- Total Tasks -->
+        <div class="metric-card" onclick="switchView('tasks-view')">
+          <div class="metric-icon bg-indigo">📋</div>
+          <div class="metric-info">
+            <span class="metric-title">Total Tasks</span>
+            <div class="metric-number-wrap">
+              <span class="metric-number" id="stat-total-tasks">0</span>
+              <span class="metric-badge" id="stat-tasks-badge">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="metric-card card-completed" onclick="switchView('tasks-view', 'completed')">
+          <div class="metric-icon bg-emerald">✅</div>
+          <div class="metric-info">
+            <span class="metric-title">Completed Tasks</span>
+            <div class="metric-number-wrap">
+              <span class="metric-number" id="stat-completed-tasks">0</span>
+              <span class="metric-badge badge-green" id="stat-completed-badge">Done</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div class="metric-card card-pending" onclick="switchView('tasks-view', 'pending')">
+          <div class="metric-icon bg-amber">⏳</div>
+          <div class="metric-info">
+            <span class="metric-title">Pending Tasks</span>
+            <div class="metric-number-wrap">
+              <span class="metric-number" id="stat-pending-tasks">0</span>
+              <span class="metric-badge badge-amber" id="stat-pending-badge">To Do</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Planned Study Sessions -->
+        <div class="metric-card" onclick="switchView('schedule-view')">
+          <div class="metric-icon bg-violet">⏰</div>
+          <div class="metric-info">
+            <span class="metric-title">Study Sessions</span>
+            <div class="metric-number-wrap">
+              <span class="metric-number" id="stat-total-schedules">0</span>
+              <span class="metric-badge badge-purple" id="stat-hours-badge">Planned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated Completion Progress Bar -->
+      <div class="progress-card">
+        <div class="progress-details">
+          <div class="progress-labels">
+            <span class="progress-name">🎯 Study Completion Rate</span>
+            <span class="progress-sub" id="progress-sub-text">0 of 0 tasks completed</span>
+          </div>
+          <span class="progress-value" id="progress-percentage">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 4. DYNAMIC VIEW SECTIONS -->
+    <!-- ============================================================ -->
+
+    <!-- ========================================== -->
+    <!-- VIEW A: ALL-IN-ONE DASHBOARD -->
+    <!-- ========================================== -->
+    <div id="dashboard-view" class="app-view active-view">
+      
+      <div class="dashboard-columns">
+        
+        <!-- Left Column: Tasks Overview & Timetable Highlights -->
+        <div class="col-main">
+
+          <!-- Today's Timetable Preview -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">🗓️</span>
+                <h3>Today's Study Timetable</h3>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-xs btn-outline" onclick="openModal('schedule-modal')">➕ Add Session</button>
+                <button class="btn btn-xs btn-ghost" onclick="switchView('schedule-view')">View All &rarr;</button>
+              </div>
+            </div>
+            <div id="dashboard-schedule-list" class="timetable-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Study Tasks Overview -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">📝</span>
+                <h3>Priority Study Tasks</h3>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-xs btn-primary" onclick="openModal('task-modal')">➕ Add Task</button>
+                <button class="btn btn-xs btn-ghost" onclick="switchView('tasks-view')">View All &rarr;</button>
+              </div>
+            </div>
+
+            <!-- Dashboard Mini Task List -->
+            <div id="dashboard-tasks-list" class="tasks-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Subjects Hub, Focus Timer & Scratchpad -->
+        <div class="col-side">
+          
+          <!-- Enrolled Subjects Hub -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">📖</span>
+                <h3>My Subjects</h3>
+              </div>
+              <button class="btn btn-xs btn-outline" onclick="openModal('subject-modal')">➕ New</button>
+            </div>
+            <p class="panel-desc">Click any subject to view its related tasks.</p>
+            <div id="dashboard-subjects-chips" class="subject-chips-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Mini Pomodoro Focus Timer Widget -->
+          <div class="panel-card timer-mini-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">⏱️</span>
+                <h3>Focus Study Timer</h3>
+              </div>
+              <button class="btn btn-xs btn-ghost" onclick="switchView('timer-view')">Full Screen &rarr;</button>
+            </div>
+            <div class="mini-timer-display" id="mini-timer-time">25:00</div>
+            <div class="mini-timer-controls">
+              <button class="btn btn-sm btn-primary" id="mini-timer-start-btn" onclick="togglePomodoroTimer()">Start Focus</button>
+              <button class="btn btn-sm btn-outline" onclick="resetPomodoroTimer()">Reset</button>
+            </div>
+          </div>
+
+          <!-- Quick Notes Scratchpad -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">📌</span>
+                <h3>Quick Study Scratchpad</h3>
+              </div>
+              <span class="save-status" id="scratchpad-status">Saved</span>
+            </div>
+            <textarea 
+              id="dashboard-scratchpad" 
+              class="scratchpad-textarea" 
+              placeholder="Jot down quick formulas, reminders, or homework questions here... (Auto-saves)"
+            ></textarea>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW B: STUDY TASKS MANAGER -->
+    <!-- ========================================== -->
+    <div id="tasks-view" class="app-view">
+      <div class="section-layout">
+        
+        <!-- Left Column: Add Task Card -->
+        <div class="form-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3>📝 Add New Study Task</h3>
+            </div>
+            <form id="add-task-form">
+              <div class="form-group">
+                <label for="task-title-input">Task Title *</label>
+                <input 
+                  type="text" 
+                  id="task-title-input" 
+                  placeholder="e.g., Complete Python Lab 3, Read Chapter 5..." 
+                  required
+                >
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="task-subject-select">Subject *</label>
+                  <select id="task-subject-select" required>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+                <div class="form-group half">
+                  <label for="task-category-select">Task Type</label>
+                  <select id="task-category-select">
+                    <option value="Assignment">Assignment</option>
+                    <option value="Reading">Reading Chapter</option>
+                    <option value="Coding">Coding Practice</option>
+                    <option value="Exam Prep">Exam Preparation</option>
+                    <option value="Revision">Revision</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="task-priority-select">Priority Level</label>
+                  <select id="task-priority-select">
+                    <option value="High">🔴 High Priority</option>
+                    <option value="Medium" selected>🟡 Medium</option>
+                    <option value="Low">🟢 Low</option>
+                  </select>
+                </div>
+                <div class="form-group half">
+                  <label for="task-date-input">Due Date *</label>
+                  <input type="date" id="task-date-input" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">Add Study Task</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Task List & Controls -->
+        <div class="list-panel">
+          <div class="panel-card">
+            
+            <!-- Filters & Search Toolbar -->
+            <div class="toolbar">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input 
+                  type="text" 
+                  id="task-search-input" 
+                  placeholder="Search tasks by title..." 
+                  oninput="handleTaskSearch()"
+                >
+              </div>
+              <div class="filter-group">
+                <button class="filter-tab active" data-filter="all" onclick="setTaskFilter('all')">All (<span id="count-all-tasks">0</span>)</button>
+                <button class="filter-tab" data-filter="pending" onclick="setTaskFilter('pending')">Pending (<span id="count-pending-tasks">0</span>)</button>
+                <button class="filter-tab" data-filter="completed" onclick="setTaskFilter('completed')">Completed (<span id="count-completed-tasks">0</span>)</button>
+              </div>
+            </div>
+
+            <!-- Tasks Container -->
+            <div id="tasks-container" class="tasks-list">
+              <!-- Dynamically populated -->
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW C: DAILY STUDY SCHEDULE (TIMETABLE) -->
+    <!-- ========================================== -->
+    <div id="schedule-view" class="app-view">
+      <div class="section-layout">
+        
+        <!-- Left: Add Schedule Session Form -->
+        <div class="form-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3>🗓️ Schedule Study Session</h3>
+            </div>
+            <form id="add-schedule-form">
+              <div class="form-group">
+                <label for="schedule-subject-select">Select Subject *</label>
+                <select id="schedule-subject-select" required>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="schedule-date-input">Study Date *</label>
+                <input type="date" id="schedule-date-input" required>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="schedule-start-time">Start Time *</label>
+                  <input type="time" id="schedule-start-time" required>
+                </div>
+                <div class="form-group half">
+                  <label for="schedule-end-time">End Time *</label>
+                  <input type="time" id="schedule-end-time" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="schedule-topic-input">Study Topic / Notes *</label>
+                <input 
+                  type="text" 
+                  id="schedule-topic-input" 
+                  placeholder="e.g., Chapter 4 Review, Calculus problem set" 
+                  required
+                >
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">Save to Timetable</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Timetable List & Print Action -->
+        <div class="list-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <h3>Daily Study Timetable</h3>
+                <span class="badge badge-purple" id="schedule-count-badge">0 Sessions</span>
+              </div>
+              <div class="panel-actions">
+                <button class="btn btn-sm btn-outline" onclick="window.print()">🖨️ Print Timetable</button>
+              </div>
+            </div>
+
+            <div id="schedule-container" class="timetable-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW D: ENROLLED SUBJECTS -->
+    <!-- ========================================== -->
+    <div id="subjects-view" class="app-view">
+      <div class="section-layout">
+        
+        <!-- Left: Add Subject Form -->
+        <div class="form-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <h3>📖 Add New Subject</h3>
+            </div>
+            <form id="add-subject-form">
+              <div class="form-group">
+                <label for="subject-name-input">Subject Name *</label>
+                <input 
+                  type="text" 
+                  id="subject-name-input" 
+                  placeholder="e.g., Python, Mathematics, English..." 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="subject-color-input">Color Badge</label>
+                <select id="subject-color-input">
+                  <option value="blue">Blue (Computer Science / Tech)</option>
+                  <option value="green">Green (Mathematics / Science)</option>
+                  <option value="purple">Purple (Languages / English)</option>
+                  <option value="orange">Orange (Engineering / Projects)</option>
+                  <option value="rose">Rose (Humanities / Arts)</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">Add Subject</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Subjects Cards Grid -->
+        <div class="list-panel">
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <h3>Enrolled Subjects</h3>
+                <span class="badge" id="subject-count-badge">0 Subjects</span>
+              </div>
+            </div>
+            <p class="panel-desc">All subjects created here are instantly available in your Task and Timetable dropdowns.</p>
+            
+            <div id="subjects-container" class="subjects-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW E: POMODORO FOCUS TIMER -->
+    <!-- ========================================== -->
+    <div id="timer-view" class="app-view">
+      <div class="timer-center-wrapper">
+        <div class="timer-full-card">
+          <div class="timer-mode-selector">
+            <button class="timer-mode-btn active" data-time="1500" onclick="setTimerMode('pomodoro', 1500, this)">🎯 Pomodoro (25m)</button>
+            <button class="timer-mode-btn" data-time="300" onclick="setTimerMode('shortBreak', 300, this)">☕ Short Break (5m)</button>
+            <button class="timer-mode-btn" data-time="900" onclick="setTimerMode('longBreak', 900, this)">🌴 Long Break (15m)</button>
+          </div>
+
+          <div class="timer-clock-display" id="full-timer-time">25:00</div>
+          <div class="timer-status-text" id="full-timer-status">Ready to Focus!</div>
+
+          <div class="timer-action-buttons">
+            <button class="btn btn-lg btn-primary" id="full-timer-toggle-btn" onclick="togglePomodoroTimer()">▶ Start Study Session</button>
+            <button class="btn btn-lg btn-outline" onclick="resetPomodoroTimer()">🔄 Reset</button>
+          </div>
+
+          <div class="timer-stats-footer">
+            <span>Sessions Completed Today: <strong id="pomodoro-completed-count">0</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW F: QUICK STUDY SCRATCHPAD / NOTES -->
+    <!-- ========================================== -->
+    <div id="notes-view" class="app-view">
+      <div class="notes-wrapper">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-icon">📝</span>
+              <h3>Personal Study Notepad & Formula Sheet</h3>
+            </div>
+            <div class="panel-actions">
+              <span class="save-status" id="full-notes-status">Auto-saved to Browser</span>
+              <button class="btn btn-xs btn-outline" onclick="clearScratchpad()">Clear Notes</button>
+            </div>
+          </div>
+          <textarea 
+            id="full-scratchpad-input" 
+            class="full-scratchpad-textarea" 
+            placeholder="Type your study notes, formulas, important exam tips, or questions to ask your professor here..."
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- 5. MODAL DIALOGS FOR QUICK ACTIONS -->
+  <!-- ============================================================== -->
+
+  <!-- Modal A: Quick Add Task -->
+  <div id="task-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>➕ New Study Task</h3>
+        <button class="modal-close" onclick="closeModal('task-modal')">&times;</button>
+      </div>
+      <form id="modal-task-form">
+        <div class="form-group">
+          <label for="modal-task-title">Task Title *</label>
+          <input type="text" id="modal-task-title" placeholder="e.g. Solve Math Assignment 4" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="modal-task-subject">Subject</label>
+            <select id="modal-task-subject" required></select>
+          </div>
+          <div class="form-group half">
+            <label for="modal-task-category">Type</label>
+            <select id="modal-task-category">
+              <option value="Assignment">Assignment</option>
+              <option value="Reading">Reading Chapter</option>
+              <option value="Coding">Coding Practice</option>
+              <option value="Exam Prep">Exam Preparation</option>
+              <option value="Revision">Revision</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="modal-task-priority">Priority</label>
+            <select id="modal-task-priority">
+              <option value="High">🔴 High</option>
+              <option value="Medium" selected>🟡 Medium</option>
+              <option value="Low">🟢 Low</option>
+            </select>
+          </div>
+          <div class="form-group half">
+            <label for="modal-task-date">Due Date</label>
+            <input type="date" id="modal-task-date" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('task-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal B: Quick Add Timetable Session -->
+  <div id="schedule-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🗓️ Add Study Timetable Slot</h3>
+        <button class="modal-close" onclick="closeModal('schedule-modal')">&times;</button>
+      </div>
+      <form id="modal-schedule-form">
+        <div class="form-group">
+          <label for="modal-schedule-subject">Subject</label>
+          <select id="modal-schedule-subject" required></select>
+        </div>
+        <div class="form-group">
+          <label for="modal-schedule-date">Date</label>
+          <input type="date" id="modal-schedule-date" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="modal-schedule-start">Start Time</label>
+            <input type="time" id="modal-schedule-start" required>
+          </div>
+          <div class="form-group half">
+            <label for="modal-schedule-end">End Time</label>
+            <input type="time" id="modal-schedule-end" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="modal-schedule-topic">Study Topic / Plan</label>
+          <input type="text" id="modal-schedule-topic" placeholder="e.g. Chapter 3 Problems" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('schedule-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add to Timetable</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal C: Quick Add Subject -->
+  <div id="subject-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📖 Add New Subject</h3>
+        <button class="modal-close" onclick="closeModal('subject-modal')">&times;</button>
+      </div>
+      <form id="modal-subject-form">
+        <div class="form-group">
+          <label for="modal-subject-name">Subject Name</label>
+          <input type="text" id="modal-subject-name" placeholder="e.g. Data Structures, Physics..." required>
+        </div>
+        <div class="form-group">
+          <label for="modal-subject-color">Color Theme</label>
+          <select id="modal-subject-color">
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+            <option value="purple">Purple</option>
+            <option value="orange">Orange</option>
+            <option value="rose">Rose</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('subject-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal D: Edit Student Name -->
+  <div id="profile-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Student Profile</h3>
+        <button class="modal-close" onclick="closeModal('profile-modal')">&times;</button>
+      </div>
+      <form id="modal-profile-form">
+        <div class="form-group">
+          <label for="modal-student-name">Your Full Name</label>
+          <input type="text" id="modal-student-name" placeholder="e.g. Alex Morgan" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('profile-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 6. FOOTER -->
+  <!-- ============================================================== -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p><strong>Student Study Planner</strong> &bull; Built with HTML, CSS, and Vanilla JavaScript</p>
+      <div class="footer-actions">
+        <button class="btn-text" onclick="restoreDemoData()">🔄 Restore Sample Demo Data</button>
+        <span>&bull;</span>
+        <button class="btn-text" onclick="clearAllData()">⚠️ Reset All Data</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Link to External JavaScript File -->
+  <script src="script.js"></script>
+</body>
+</html>
